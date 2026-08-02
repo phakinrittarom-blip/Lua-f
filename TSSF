@@ -1,0 +1,130 @@
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))
+local Window = Rayfield:CreateWindow({
+   Name = "Player Hub | Noclip & Movement",
+   LoadingTitle = "กำลังโหลดสคริปต์...",
+   LoadingSubtitle = "by Gemini",
+   ConfigurationSaving = {
+      Enabled = false,
+   },
+   KeySystem = false -- ปิดระบบใส่ คีย์ (ถ้าอยากให้เข้าได้เลย)
+})
+
+-- สร้าง Tab หลัก
+local MainTab = Window:CreateTab("Main", 4483362458) -- สามารถเปลี่ยน ID ไอคอนได้
+
+-- ตัวแปรตั้งค่า
+local NoclipEnabled = false
+local SpeedEnabled = false
+local JumpEnabled = false
+
+local WalkSpeedValue = 16
+local JumpPowerValue = 50
+
+-- ระบบ Noclip (ทำงานตลอดเวลาเมื่อเปิด Toggle)
+game:GetService("RunService").Stepped:Connect(function()
+    if NoclipEnabled and game.Players.LocalPlayer.Character then
+        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ปุ่มเปิด-ปิด ทะลุกำแพง (Noclip)
+local NoclipToggle = MainTab:CreateToggle({
+   Name = "ทะลุกำแพง (Noclip)",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+      NoclipEnabled = Value
+   end,
+})
+
+-- หัวข้อหมวดการเคลื่อนที่
+MainTab:CreateSection("Movement Settings")
+
+-- สไลเดอร์ปรับความเร็ว (Speed Slider)
+local SpeedSlider = MainTab:CreateSlider({
+   Name = "ความเร็วเดิน (WalkSpeed)",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "SpeedSlider",
+   Callback = function(Value)
+      WalkSpeedValue = Value
+      if SpeedEnabled and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+-- ปุ่มเปิด-ปิด เดินเร็ว
+local SpeedToggle = MainTab:CreateToggle({
+   Name = "เปิดใช้งานเดินเร็ว",
+   CurrentValue = false,
+   Flag = "SpeedToggle",
+   Callback = function(Value)
+      SpeedEnabled = Value
+      local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+      if humanoid then
+         if Value then
+            humanoid.WalkSpeed = WalkSpeedValue
+         else
+            humanoid.WalkSpeed = 16 -- คืนค่าปกติ
+         end
+      end
+   end,
+})
+
+-- สไลเดอร์ปรับความสูงการกระโดด (Jump Power)
+local JumpSlider = MainTab:CreateSlider({
+   Name = "พลังกระโดด (JumpPower)",
+   Range = {50, 500},
+   Increment = 1,
+   Suffix = "Power",
+   CurrentValue = 50,
+   Flag = "JumpSlider",
+   Callback = function(Value)
+      JumpPowerValue = Value
+      if JumpEnabled and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         local humanoid = game.Players.LocalPlayer.Character.Humanoid
+         humanoid.UseJumpPower = true
+         humanoid.JumpPower = Value
+      end
+   end,
+})
+
+-- ปุ่มเปิด-ปิด กระโดดสูง
+local JumpToggle = MainTab:CreateToggle({
+   Name = "เปิดใช้งานกระโดดสูง",
+   CurrentValue = false,
+   Flag = "JumpToggle",
+   Callback = function(Value)
+      JumpEnabled = Value
+      local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+      if humanoid then
+         humanoid.UseJumpPower = true
+         if Value then
+            humanoid.JumpPower = JumpPowerValue
+         else
+            humanoid.JumpPower = 50 -- คืนค่าปกติ
+         end
+      end
+   end,
+})
+
+-- ปรับค่าคืนเมื่อตัวละครเกิดใหม่ (Respawn Loop)
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    task.wait(0.5)
+    if SpeedEnabled then
+        char.Humanoid.WalkSpeed = WalkSpeedValue
+    end
+    if JumpEnabled then
+        char.Humanoid.UseJumpPower = true
+        char.Humanoid.JumpPower = JumpPowerValue
+    end
+end)
